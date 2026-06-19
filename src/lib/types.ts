@@ -24,6 +24,7 @@ export interface ExtractedImage {
   pseudo?: '::before' | '::after';
   width?: number;
   height?: number;
+  iiifBase?: string;
 }
 
 export interface StackLayer {
@@ -48,6 +49,7 @@ export type MessageType =
   | { type: 'OPEN_ALL_URLS'; urls: string[] }
   | { type: 'DOWNLOAD_URL'; url: string; filename?: string }
   | { type: 'DOWNLOAD_ALL_URLS'; urls: string[] }
+  | { type: 'STITCH_IIIF'; base: string; rowUrl: string }
   | { type: 'COPY_URL'; url: string };
 
 export const OVERLAY_ROOT_ID = 'background-reveal-root';

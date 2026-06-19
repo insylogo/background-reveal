@@ -64,4 +64,12 @@ describe('ResultsPanel', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.getAttribute('data-image-url')).toBe('https://example.com/b.jpg');
   });
+
+  it('shows action errors on the matching row', () => {
+    panel.add(result(['https://example.com/a.jpg']), () => {});
+    panel.showActionError('https://example.com/a.jpg', 'invalid size: no comma found');
+
+    const error = document.querySelector('#background-reveal-panel .action-error');
+    expect(error?.textContent).toBe('invalid size: no comma found');
+  });
 });

@@ -10,7 +10,10 @@ interface IiifInfo {
   height?: number;
   thumbnail?: string | { '@id'?: string; id?: string };
   sizes?: Array<{ width?: number; height?: number }>;
+  tiles?: Array<{ width?: number; height?: number; scaleFactors?: number[] }>;
 }
+
+export type { IiifInfo };
 
 declare global {
   interface Window {
@@ -35,17 +38,42 @@ function isIiifInfoUrl(value: string): boolean {
 }
 
 const IIIF_IMAGE_URL_RE =
-  /https?:\/\/[^\s"'<>]+\/iiif\/\d+\/[^\s"'<>/]+\/[^\s"'<>]+/gi;
+  /https?:\/\/[^\s"'<>]+\/iiif\/(?:\d+\/)?[^\s"'<>/]+(?:\/[^\s"'<>]+)*/gi;
 
-const IIIF_BASE_RE = /^(https?:\/\/[^/]+\/iiif\/\d+\/[^/]+)/i;
+const IIIF_BASE_RE =
+  /^(https?:\/\/[^/]+\/iiif\/(?:\d+\/)?[^/]+)(?:\/|$)/i;
 
 export function parseIiifImageBase(url: string): string | null {
-  const match = url.match(IIIF_BASE_RE);
+  const clean = url.split(/[?#]/)[0] ?? url;
+  if (/\/info\.json$/i.test(clean)) {
+    return clean.replace(/\/info\.json$/i, '');
+  }
+  const match = clean.match(IIIF_BASE_RE);
   return match?.[1] ?? null;
 }
 
+export function getIiifVersion(info: IiifInfo, baseHint = ''): 2 | 3 {
+  const id = String(info['@id'] ?? info.id ?? baseHint);
+  if (/\/iiif\/3\//i.test(id)) return 3;
+  if (/\/iiif\/2\//i.test(id)) return 2;
+
+  const context = JSON.stringify(info['@context'] ?? '');
+  const profile = JSON.stringify(info.profile ?? '');
+  if (/\bimage\/3\b/.test(context) || /\bimage\/3\b/.test(profile)) {
+    return 3;
+  }
+  return 2;
+}
+
+export function inferIiifVersion(base: string, info?: IiifInfo): 2 | 3 {
+  if (info) return getIiifVersion(info);
+  if (/\/iiif\/3\//i.test(base)) return 3;
+  if (/\/iiif\/2\//i.test(base)) return 2;
+  return 2;
+}
+
 export function buildIiifInfoUrl(base: string): string {
-  return `${normalizeIiifBase(base)}/info.json`;
+  return `${upgradeInsecureIiifUrl(normalizeIiifBase(base))}/info.json`;
 }
 
 export function detectIiifUrlsFromPerformance(): string[] {
@@ -70,8 +98,16 @@ export function detectIiifUrlsInText(text: string): string[] {
     const base = parseIiifImageBase(match[0]);
     if (base) bases.add(base);
   }
-  for (const match of text.matchAll(/https?:\/\/[^"'\\s<>]+?\/iiif\/\d+\/[^"'\\s<>/]+\/info\.json/gi)) {
+  for (const match of text.matchAll(
+    /https?:\/\/[^"'\\s<>]+?\/iiif\/(?:\d+\/)?[^"'\\s<>/]+\/info\.json/gi,
+  )) {
     bases.add(normalizeIiifBase(match[0]));
+  }
+  for (const match of text.matchAll(
+    /https?:\/\/[^"'\\s<>]+?\/iiif\/(?:\d+\/)?[^"'\\s<>/]+\/?(?=["'\\s<>]|$)/gi,
+  )) {
+    const parsed = parseIiifImageBase(match[0]);
+    if (parsed) bases.add(parsed);
   }
   return [...bases];
 }
@@ -124,13 +160,43 @@ function normalizeIiifBase(id: string): string {
   return id.replace(/\/info\.json$/i, '').replace(/\/$/, '');
 }
 
-export function buildIiifFullUrl(baseId: string, format = 'jpg'): string {
-  const base = normalizeIiifBase(baseId);
-  return `${base}/full/max/0/default.${format}`;
+function upgradeInsecureIiifUrl(url: string): string {
+  if (
+    typeof location !== 'undefined' &&
+    location.protocol === 'https:' &&
+    url.startsWith('http://')
+  ) {
+    return `https://${url.slice('http://'.length)}`;
+  }
+  return url;
+}
+
+function iiifSizeToken(
+  version: 2 | 3,
+  dimensions?: { width?: number; height?: number },
+): string {
+  if (version === 3) return 'max';
+  if (dimensions?.width) {
+    return dimensions.height
+      ? `${dimensions.width},${dimensions.height}`
+      : `${dimensions.width},`;
+  }
+  return 'full';
+}
+
+export function buildIiifFullUrl(
+  baseId: string,
+  format = 'jpg',
+  version: 2 | 3 = 2,
+  dimensions?: { width?: number; height?: number },
+): string {
+  const base = upgradeInsecureIiifUrl(normalizeIiifBase(baseId));
+  const size = iiifSizeToken(version, dimensions);
+  return `${base}/full/${size}/0/default.${format}`;
 }
 
 export function buildIiifThumbnailUrl(baseId: string, width = 256): string {
-  const base = normalizeIiifBase(baseId);
+  const base = upgradeInsecureIiifUrl(normalizeIiifBase(baseId));
   return `${base}/full/${width},/0/default.jpg`;
 }
 
@@ -147,13 +213,16 @@ export function imagesFromIiifInfo(
     typeof info.profile === 'string' && info.profile.includes('png')
       ? 'png'
       : 'jpg';
+  const version = getIiifVersion(info, base);
+  const dimensions = { width: info.width, height: info.height };
 
   images.push({
-    url: buildIiifFullUrl(resolvedId, format),
+    url: buildIiifFullUrl(resolvedId, format, version, dimensions),
     kind: 'iiif-full',
     label: `IIIF full (${info.width ?? '?'}×${info.height ?? '?'})`,
     width: info.width,
     height: info.height,
+    iiifBase: upgradeInsecureIiifUrl(normalizeIiifBase(resolvedId)),
   });
 
   if (info.thumbnail) {
@@ -173,13 +242,19 @@ export function imagesFromIiifInfo(
   return images;
 }
 
-export async function fetchIiifImages(infoUrl: string): Promise<ExtractedImage[]> {
-  const resolved = resolveUrl(infoUrl, document.baseURI);
+export async function fetchIiifInfo(base: string): Promise<IiifInfo> {
+  const resolved = upgradeInsecureIiifUrl(buildIiifInfoUrl(base));
   const response = await fetch(resolved);
   if (!response.ok) {
-    throw new Error(`IIIF fetch failed: ${response.status}`);
+    throw new Error(`IIIF info fetch failed: ${response.status}`);
   }
-  const info = (await response.json()) as IiifInfo;
+  return (await response.json()) as IiifInfo;
+}
+
+export async function fetchIiifImages(infoUrl: string): Promise<ExtractedImage[]> {
+  const resolved = upgradeInsecureIiifUrl(resolveUrl(infoUrl, document.baseURI));
+  const base = resolved.replace(/\/info\.json$/i, '');
+  const info = await fetchIiifInfo(base);
   return imagesFromIiifInfo(info, resolved);
 }
 
@@ -285,7 +360,9 @@ export function detectIiifBasesInStack(stack: Element[]): string[] {
 
   for (const script of Array.from(document.querySelectorAll('script'))) {
     const text = script.textContent ?? '';
-    for (const match of text.matchAll(/https?:\/\/[^\s"'<>]+\/iiif\/\d+\/[^\s"'<>/]+/gi)) {
+    for (const match of text.matchAll(
+      /https?:\/\/[^\s"'<>]+\/iiif\/(?:\d+\/)?[^\s"'<>/]+/gi,
+    )) {
       const parsed = parseIiifImageBase(match[0]);
       if (parsed) bases.add(normalizeIiifBase(parsed));
     }
@@ -327,10 +404,12 @@ export async function resolveIiifImagesForStack(
     try {
       images.push(...(await fetchIiifImages(buildIiifInfoUrl(base))));
     } catch {
+      const version = inferIiifVersion(base);
       images.push({
-        url: buildIiifFullUrl(base),
+        url: buildIiifFullUrl(base, 'jpg', version),
         kind: 'iiif-full',
         label: 'IIIF full resolution',
+        iiifBase: upgradeInsecureIiifUrl(normalizeIiifBase(base)),
       });
     }
   }

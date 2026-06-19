@@ -140,6 +140,24 @@ const STYLES = `
   cursor: pointer;
 }
 #${PANEL_ID} .actions button:hover { background: #333355; border-color: #666; }
+#${PANEL_ID} .action-error {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #f87171;
+  word-break: break-word;
+}
+#${PANEL_ID} .action-status {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #93c5fd;
+  word-break: break-word;
+}
+#${PANEL_ID} .actions button[data-action="stitch-iiif"] {
+  border-color: #6366f1;
+  color: #c7d2fe;
+}
 `;
 
 function truncate(url: string, max = 80): string {
@@ -185,6 +203,41 @@ export class ResultsPanel {
     this.onAction = null;
     this.images = [];
     this.revealCount = 0;
+  }
+
+  showActionError(url: string, message: string): void {
+    this.setActionMessage(url, message, 'action-error');
+  }
+
+  showActionStatus(url: string, message: string): void {
+    this.setActionMessage(url, message, 'action-status');
+  }
+
+  clearActionMessage(url: string): void {
+    this.findRow(url)?.querySelector('.action-error, .action-status')?.remove();
+  }
+
+  private setActionMessage(url: string, message: string, className: string): void {
+    const row = this.findRow(url);
+    if (!row) return;
+
+    row.querySelector('.action-error, .action-status')?.remove();
+
+    const messageEl = document.createElement('div');
+    messageEl.className = className;
+    messageEl.textContent = message;
+    row.querySelector('.info')?.appendChild(messageEl);
+  }
+
+  private findRow(url: string): HTMLElement | null {
+    const rows = this.panel?.querySelectorAll('.image-row');
+    if (!rows) return null;
+    for (const row of rows) {
+      if (row.getAttribute('data-image-url') === url) {
+        return row as HTMLElement;
+      }
+    }
+    return null;
   }
 
   private mountPanel(): void {
@@ -295,6 +348,10 @@ export class ResultsPanel {
         url,
         filename: filenameFromUrl(url),
       });
+    } else if (action === 'stitch-iiif') {
+      const base = row.getAttribute('data-iiif-base');
+      if (!base) return;
+      this.onAction({ type: 'STITCH_IIIF', base, rowUrl: url });
     }
   };
 
@@ -302,6 +359,9 @@ export class ResultsPanel {
     const row = document.createElement('div');
     row.className = 'image-row';
     row.setAttribute('data-image-url', img.url);
+    if (img.iiifBase) {
+      row.setAttribute('data-iiif-base', img.iiifBase);
+    }
 
     const canPreview =
       img.url.startsWith('http') ||
@@ -312,6 +372,11 @@ export class ResultsPanel {
       ? `<img class="thumb" src="${escapeAttr(img.url)}" alt="" loading="lazy" />`
       : `<div class="thumb-placeholder">?</div>`;
 
+    const stitchButton =
+      img.kind === 'iiif-full' && img.iiifBase
+        ? `<button type="button" data-action="stitch-iiif">Stitch full res</button>`
+        : '';
+
     row.innerHTML = `
       ${thumbHtml}
       <div class="info">
@@ -321,6 +386,7 @@ export class ResultsPanel {
           <button type="button" data-action="open">Open</button>
           <button type="button" data-action="copy">Copy</button>
           <button type="button" data-action="download">Download</button>
+          ${stitchButton}
         </div>
       </div>
     `;

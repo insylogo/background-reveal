@@ -38,6 +38,7 @@ The results panel lists unique image URLs with **Open**, **Copy URL**, and **Dow
 | Site | Notes |
 |------|-------|
 | [National Archives Catalog](https://catalog.archives.gov/) | Uses IIIF v3 tiles on a canvas, not a plain `<img>`. Open the record, **wait for the viewer to load** (pan/zoom once), then reveal. Look for an **iiif full** entry — that is the full-resolution URL. |
+| [Nationalmuseum Sweden](https://collection.nationalmuseum.se/) | Page `<img>` URLs are `.large.jpg` previews; look for **IIIF full** (~7000px) from embedded manifest data. Use **Stitch full res** to download all IIIF tiles and assemble the image when a single full URL fails. |
 | Instagram | Images often sit under transparent overlays; stack picking finds the `<img>` / largest `srcset` entry. Login walls may block some content. |
 | Generic CSS hero sections | Works on `background-image`, `image-set()`, and `::before` / `::after` pseudo-elements. |
 
@@ -57,7 +58,7 @@ The results panel lists unique image URLs with **Open**, **Copy URL**, and **Dow
 | CSS custom properties | `--bg-image`, `--background-image`, etc. |
 | Open shadow DOM | Walks open shadow roots |
 | Blob / data URIs | Passed through |
-| IIIF / OpenSeadragon | Tile URLs from network + DOM → full-res `{base}/full/max/0/default.jpg` |
+| IIIF / OpenSeadragon | Tile URLs from network + DOM → full-res URL (v3: `/full/max/…`, v2: `/full/{w},{h}/…`) |
 | `<video poster>` | Poster URL |
 | Inline / linked SVG `<image>` | `href` / `xlink:href` |
 | Same-origin iframes | Best-effort DOM walk |
