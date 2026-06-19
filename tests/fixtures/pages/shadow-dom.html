@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Shadow DOM Fixture</title>
+  </head>
+  <body>
+    <div id="host" data-testid="shadow-host"></div>
+    <script>
+      const host = document.getElementById('host');
+      const root = host.attachShadow({ mode: 'open' });
+      root.innerHTML = `
+        <style>
+          .inner {
+            width: 240px;
+            height: 160px;
+            background-image: url('https://example.com/fixtures/shadow-bg.png');
+          }
+        </style>
+        <div class="inner" data-testid="shadow-inner"></div>
+      `;
+    </script>
+  </body>
+</html>

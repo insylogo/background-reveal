@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Srcset Fixture</title>
+  </head>
+  <body>
+    <picture id="target" data-testid="picture-target">
+      <source
+        srcset="https://example.com/fixtures/photo-640.webp 640w, https://example.com/fixtures/photo-1920.webp 1920w"
+        type="image/webp"
+      />
+      <img
+        src="https://example.com/fixtures/photo-fallback.jpg"
+        alt="photo"
+        data-testid="picture-img"
+      />
+    </picture>
+  </body>
+</html>

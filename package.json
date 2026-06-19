@@ -1,0 +1,39 @@
+{
+  "name": "background-reveal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "build:chrome": "wxt build -b chrome",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "zip:chrome": "wxt zip -b chrome",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:firefox": "playwright test --project=firefox",
+    "lint:ext": "web-ext lint -s .output/firefox-mv2",
+    "sign:firefox": "web-ext sign --source-dir=.output/firefox-mv2 --artifacts-dir=web-ext-artifacts",
+    "compile": "tsc --noEmit",
+    "icons": "node scripts/generate-icons.mjs",
+    "serve:fixtures": "serve tests/fixtures -l 4173",
+    "postinstall": "node scripts/generate-icons.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@types/webextension-polyfill": "^0.12.1",
+    "happy-dom": "^15.11.7",
+    "serve": "^14.2.4",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "web-ext": "^8.3.0",
+    "wxt": "0.19.29"
+  },
+  "dependencies": {
+    "webextension-polyfill": "^0.12.0"
+  }
+}

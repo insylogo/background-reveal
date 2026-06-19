@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NARA IIIF Fixture</title>
+    <style>
+      #viewer {
+        width: 500px;
+        height: 400px;
+      }
+      .openseadragon-canvas {
+        width: 100%;
+        height: 100%;
+        background: #222;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="openseadragon-container" id="viewer" data-testid="nara-viewer">
+      <canvas class="openseadragon-canvas" width="500" height="400"></canvas>
+    </div>
+    <script>
+      const tile =
+        'https://catalog.archives.gov/iiif/3/opastorage%2Flive%2Fsample%2Fimage.jpg/0,0,1000,800/256,205/0/default.jpg';
+      performance.mark('tile-loaded');
+      if (window.performance && performance.getEntriesByType) {
+        const entry = {
+          name: tile,
+          entryType: 'resource',
+          startTime: 0,
+          duration: 0,
+          toJSON() {
+            return this;
+          },
+        };
+        const orig = performance.getEntriesByType.bind(performance);
+        performance.getEntriesByType = (type) => {
+          if (type === 'resource') return [entry];
+          return orig(type);
+        };
+      }
+    </script>
+  </body>
+</html>

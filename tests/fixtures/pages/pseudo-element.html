@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pseudo Element Fixture</title>
+    <style>
+      .card::before {
+        content: '';
+        display: block;
+        width: 200px;
+        height: 120px;
+        background-image: url('https://example.com/fixtures/pseudo-bg.webp');
+      }
+      .card {
+        width: 200px;
+        height: 120px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card" id="target" data-testid="pseudo-card"></div>
+  </body>
+</html>

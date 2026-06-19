@@ -1,0 +1,13 @@
+{
+  "@context": "http://iiif.io/api/image/2/context.json",
+  "@id": "http://localhost:4173/iiif/sample",
+  "protocol": "http://iiif.io/api/image",
+  "width": 2000,
+  "height": 1500,
+  "profile": ["http://iiif.io/api/image/2/level2.json"],
+  "thumbnail": "http://localhost:4173/iiif/sample/full/128,/0/default.jpg",
+  "sizes": [
+    { "width": 256, "height": 192 },
+    { "width": 1024, "height": 768 }
+  ]
+}

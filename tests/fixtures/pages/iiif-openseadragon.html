@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>IIIF OpenSeadragon Fixture</title>
+    <style>
+      #viewer {
+        width: 500px;
+        height: 400px;
+        background: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="viewer" class="openseadragon-container" data-testid="iiif-viewer"></div>
+    <script>
+      window.OpenSeadragon = {
+        viewers: [
+          {
+            element: document.getElementById('viewer'),
+            tileSources: 'http://localhost:4173/iiif/info.json',
+          },
+        ],
+        getViewer(el) {
+          return this.viewers.find((v) => v.element === el);
+        },
+      };
+    </script>
+  </body>
+</html>
