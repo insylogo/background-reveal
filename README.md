@@ -64,9 +64,9 @@ The results panel lists unique image URLs with **Open**, **Copy URL**, and **Dow
 
 ### Actions
 
-- **Open** — new tab
-- **Copy URL** — clipboard
-- **Download** — browser downloads API
+- **Open** / **Copy** / **Download** — per image
+- **Open all** / **Download all** — entire accumulated list
+- Repeated **Reveal images here** appends to the panel until you close it (×)
 
 ### Known limitations
 
@@ -97,15 +97,15 @@ npm run lint:ext      # web-ext lint (after firefox build)
 
 ### Firefox (AMO)
 
-Extension ID: `background-reveal@local.dev`
+Extension ID (development): `background-reveal@local.dev` — change to a permanent ID before listing; see [`docs/STORE_SUBMISSION.md`](docs/STORE_SUBMISSION.md).
 
 ```bash
-npm run sign:firefox   # requires AMO API credentials
+npm run sign:firefox   # requires AMO API credentials → web-ext-artifacts/*.xpi
 ```
 
 ### Chrome Web Store / Edge Add-ons
 
-Upload zip from `npm run zip:chrome`.
+Upload zip from `npm run zip:chrome`. Listing checklist: [`docs/STORE_SUBMISSION.md`](docs/STORE_SUBMISSION.md).
 
 ## Test
 
@@ -119,6 +119,8 @@ Chromium E2E loads the unpacked extension automatically. Firefox E2E is document
 ## Privacy
 
 See [PRIVACY.md](PRIVACY.md). No data collection; `<all_urls>` is used only when you invoke the extension on a page.
+
+**Store listings** require a **public HTTPS URL** to that policy — hosting the file in git is not sufficient. See [`docs/STORE_SUBMISSION.md`](docs/STORE_SUBMISSION.md).
 
 ## License
 
